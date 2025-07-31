@@ -1,0 +1,62 @@
+<div class="order-tracking-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Order Tracking</mat-card-title>
+      <mat-card-subtitle *ngIf="orderId">Order ID: {{orderId}}</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Loading State -->
+      <div *ngIf="loading" class="loading-container">
+        <mat-progress-spinner diameter="50"></mat-progress-spinner>
+        <p>Loading order status...</p>
+      </div>
+
+      <!-- Error State -->
+      <div *ngIf="error && !loading" class="error-container">
+        <p class="error-message">{{error}}</p>
+        <button mat-raised-button color="primary" (click)="retryLoad()" class="retry-button">
+          Retry
+        </button>
+      </div>
+
+      <!-- Order Status Display -->
+      <ng-container *ngIf="orderStatus$ | async as status">
+        <!-- Order Summary -->
+        <div class="order-summary">
+          <div class="summary-item" *ngIf="status.customerName">
+            <strong>Customer:</strong> {{status.customerName}}
+          </div>
+          <div class="summary-item" *ngIf="status.orderValue">
+            <strong>Order Value:</strong> ${{status.orderValue | number:'1.2-2'}}
+          </div>
+          <div class="summary-item" *ngIf="status.estimatedDelivery">
+            <strong>Estimated Delivery:</strong> {{status.estimatedDelivery | date:'mediumDate'}}
+          </div>
+        </div>
+
+        <!-- Progress Stepper -->
+        <mat-stepper [selectedIndex]="getStepIndex(status.currentStatus)" 
+                     class="order-stepper" 
+                     orientation="horizontal">
+          <mat-step *ngFor="let step of steps; let i = index" 
+                    [completed]="getStepIndex(status.currentStatus) >= i"
+                    [state]="getStepState(step.value, status.currentStatus)">
+            <ng-template matStepLabel>{{step.label}}</ng-template>
+            <div *ngIf="status.currentStatus === step.value" class="step-content">
+              <p class="timestamp">{{status.timestamp | date:'medium'}}</p>
+              <p *ngIf="status.details" class="details">{{status.details}}</p>
+            </div>
+          </mat-step>
+        </mat-stepper>
+
+        <!-- Current Status Card -->
+        <div class="current-status-card">
+          <h3>Current Status: {{getCurrentStepLabel(status.currentStatus)}}</h3>
+          <p class="status-description">{{status.details}}</p>
+          <p class="last-updated">Last updated: {{status.timestamp | date:'medium'}}</p>
+        </div>
+      </ng-container>
+    </mat-card-content>
+  </mat-card>
+</div>
